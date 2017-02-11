@@ -1,14 +1,22 @@
 import digitalocean
+from secrets import DO_TOKEN
 
-region = 'sf2'
-image = 'ubuntu-16-06-x32' #Change to image name
+region = 'SFO2'
+image = '22780196' #Change to image name
 size_slug = '512mb'
+tag = digitalocean.Tag(token=access_token, name="wisp")
+tag.create()
 class Wisp:
-	def __init__(access_token, name):
-		self.droplet = digitalocean.Droplet(token=access_token,
+    def __init__(self, access_token, name):
+        self.droplet = digitalocean.Droplet(token=access_token,
                                name = name,
                                region = region,
                                image = image,
-                               size_slug=size_slug,  # 512MB
+                               size_slug=size_slug,
+                               private_networking=True,
                                backups=False)
-		self.droplet.create()
+        self.droplet.create()
+        tag.add_droplets([str(self.droplet.id)])
+
+if __name__ == '__main__':
+	wisp = Wisp(DO_TOKEN, 'wisp-from-api')
