@@ -1,6 +1,7 @@
 import digitalocean
 from secrets import DO_TOKEN
 from datetime import datetime
+from datetime import timedelta
 import time
 import thread
 
@@ -28,8 +29,9 @@ class Wisp:
     @property
     def created_at(self):
         if self.droplet.created_at:
-            return datetime.strptime(self.droplet.created_at, "%Y-%m-%dT%H:%M:%S")
+            return datetime.strptime(self.droplet.created_at, "%Y-%m-%dT%H:%M:%SZ")
         else:
+            self.droplet.load()
             return None
 
 def check_alive(wisps):
