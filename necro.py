@@ -108,7 +108,7 @@ if __name__ == '__main__':
     try:
         manager = digitalocean.Manager(token=DO_TOKEN)
         count = len(manager.get_all_droplets())
-        while count < 10:
+        while count < 25:
             wisps.append(Wisp(DO_TOKEN, 'wisp-from-api-%d' % count, tag))
             count += 1
         tag.add_droplets([str(w.droplet.id) for w in wisps])
@@ -116,8 +116,8 @@ if __name__ == '__main__':
         print(e)
     thread.start_new_thread(check_thread, (wisps,))
     thread.start_new_thread(udp_listener, (wisps,))
-    time.sleep(60)
-    for wisp in wisps:
-        udp_message(wisp, 'touch /usr/local/bin/a')
+    # time.sleep(60)
+    # for wisp in wisps:
+    #     udp_message(wisp, 'touch /usr/local/bin/a')
     while True:
         pass
