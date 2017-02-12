@@ -7,7 +7,7 @@ import thread
 import socket
 
 region = 'SFO2'
-image = '22783408' #Wisp-B
+image = '22797709' #Wisp-C
 size_slug = '512mb'
 class Wisp:
     active = False
@@ -101,7 +101,7 @@ def clean_by_tag(tag):
 
 if __name__ == '__main__':
     clean_by_tag('wisp')
-    time.sleep(5) #time for droplets to spin down
+    time.sleep(10) #time for droplets to spin down
     wisps = []
     tag = digitalocean.Tag(token=DO_TOKEN, name="wisp")
     tag.create()
