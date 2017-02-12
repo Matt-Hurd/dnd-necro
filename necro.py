@@ -1,5 +1,5 @@
 import digitalocean
-from secrets import DO_TOKEN
+from secrets import DO_TOKEN, SSH_KEY
 from datetime import datetime
 from datetime import timedelta
 import time
@@ -17,7 +17,7 @@ class Wisp:
                                region = region,
                                image = image,
                                size_slug=size_slug,
-                               ssh_keys=[],
+                               ssh_keys=[SSH_KEY],
                                private_networking=True,
                                backups=False)
         self.droplet.create()
@@ -32,6 +32,12 @@ class Wisp:
         else:
             self.droplet.load()
             return None
+
+    @property
+    def private_ip_address(self):
+        if not self.droplet.private_ip_address:
+            self.droplet.load()
+        return self.droplet.private_ip_address
 
 def check_alive(wisps):
     to_remove = []
@@ -74,6 +80,14 @@ def udp_listener(wisps):
             print("%s is alive" % addr[0])
             receive_alive_signal(wisps, addr[0])
 
+def udp_message(wisp, message):
+    UDP_IP = wisp.private_ip_address
+    UDP_PORT = 5010
+
+    sock = socket.socket(socket.AF_INET,
+                         socket.SOCK_DGRAM)
+    sock.sendto(message, (UDP_IP, UDP_PORT))
+
 def check_thread(wisps):
     while True:
         check_alive(wisps)
@@ -87,6 +101,7 @@ def clean_by_tag(tag):
 
 if __name__ == '__main__':
     clean_by_tag('wisp')
+    time.sleep(5) #time for droplets to spin down
     wisps = []
     tag = digitalocean.Tag(token=DO_TOKEN, name="wisp")
     tag.create()
@@ -99,10 +114,10 @@ if __name__ == '__main__':
         tag.add_droplets([str(w.droplet.id) for w in wisps])
     except Exception as e:
         print(e)
-        print("Waiting before killing all nodes")
-        time.sleep(20)
-        party_wipe(wisps)
     thread.start_new_thread(check_thread, (wisps,))
     thread.start_new_thread(udp_listener, (wisps,))
+    time.sleep(60)
+    for wisp in wisps:
+        udp_message(wisp, 'touch /usr/local/bin/a')
     while True:
         pass
