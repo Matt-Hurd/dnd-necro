@@ -7,13 +7,15 @@ import thread
 import socket
 
 region = 'SFO2'
-image = ['22797860', #wisp-D0
+image = ['22797709', #wisp-C
+         '22797860', #wisp-D0
          '22797979', #wisp-D1
          '22797984', #wisp-D2
          '22797986', #wisp-D3
          '22797987', #wisp-D4
          '22797493', #wisp-D5
-         '22797494'] #wisp-D6
+         '22797494', #wisp-D6
+         '22799237'] #wisp-D7
 size_slug = '512mb'
 class Wisp:
     active = False
@@ -126,6 +128,7 @@ if __name__ == '__main__':
                 wisps.append(Wisp(DO_TOKEN[i], i, 'wisp-from-api-%d' % count, tag))
                 count += 1
         except Exception as e:
+            print(str(i))
             print(e)
         tag.add_droplets([str(w.droplet.id) for w in wisps])
         all_wisps.append(wisps)
