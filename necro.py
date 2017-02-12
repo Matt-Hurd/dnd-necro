@@ -4,24 +4,23 @@ from datetime import datetime
 from datetime import timedelta
 import time
 import thread
+import socket
 
 region = 'SFO2'
-image = '22780196' #Change to image name
+image = '22783408' #Wisp-B
 size_slug = '512mb'
 class Wisp:
     active = False
-    def __init__(self, access_token, name):
+    def __init__(self, access_token, name, tag):
         self.droplet = digitalocean.Droplet(token=access_token,
                                name = name,
                                region = region,
                                image = image,
                                size_slug=size_slug,
+                               ssh_keys=[],
                                private_networking=True,
                                backups=False)
         self.droplet.create()
-        tag = digitalocean.Tag(token=DO_TOKEN, name="wisp")
-        tag.create()
-        tag.add_droplets([str(self.droplet.id)])
 
     def kill(self):
         self.droplet.destroy()
@@ -58,7 +57,22 @@ def receive_alive_signal(wisps, ip):
                 continue
         if not wisp.active:
             if ip == wisp.droplet.private_ip_address:
+                print("Node Loaded")
                 wisp.active = True
+
+def udp_listener(wisps):
+    UDP_IP = "127.0.0.1"
+    UDP_PORT = 5005
+
+    sock = socket.socket(socket.AF_INET, # Internet
+                         socket.SOCK_DGRAM) # UDP
+    sock.bind(('', UDP_PORT))
+
+    while True:
+        data, addr = sock.recvfrom(1024) # buffer size is 1024 bytes
+        if data == 'WHISPER':
+            print("%s is alive" % addr[0])
+            receive_alive_signal(wisps, addr[0])
 
 def check_thread(wisps):
     while True:
@@ -66,8 +80,19 @@ def check_thread(wisps):
         time.sleep(10)
 
 if __name__ == '__main__':
-    wisp = Wisp(DO_TOKEN, 'wisp-from-api')
-    wisps = [wisp]
+    wisps = []
+    tag = digitalocean.Tag(token=DO_TOKEN, name="wisp")
+    tag.create()
+    try:
+        for x in range(6):
+            wisps.append(Wisp(DO_TOKEN, 'wisp-from-api-%d' % x, tag))
+        tag.add_droplets([str(w.droplet.id) for w in wisps])
+    except ExceptionType as e:
+        print(e)
+        print("Waiting before killing all nodes")
+        time.sleep(20)
+        party_wipe(wisps)
     thread.start_new_thread(check_thread, (wisps,))
+    thread.start_new_thread(udp_listener, (wisps,))
     while True:
         pass
